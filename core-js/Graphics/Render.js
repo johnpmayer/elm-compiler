@@ -148,6 +148,27 @@ function container(pos,elem) {
     return div;
 };
 
+var svgNS = "http://www.w3.org/2000/svg";
+
+function svg(node) {
+  switch(node[0]) {
+  case "STransform":
+    var t = node[1];
+    var children = node[2];
+    var div = newElement('div');
+    return div;
+    break;
+  case "SCircle":
+    var r = node[1];
+    var svg = document.createElementNS(svgNS,'svg');
+    var prim = document.createElementNS(svgNS,'circle');
+    prim.setAttributeNS(null, "r", r);
+    svg.appendChild(prim);
+    return svg;
+    break;
+  }
+}
+
 function render(elem) {
     var e = {};
     switch(elem[2][0]) {
@@ -159,6 +180,7 @@ function render(elem) {
     case "ECollage":     e = Collage.collage(elem[2][1],elem[2][2],elem[2][3]); break;
     case "EEmpty":       e = newElement('div'); break;
     case "EContainer":   e = container(elem[2][1],elem[2][2]); break;
+    case "ESVG":         e = svg(elem[2][1]); break;
     case "EHtml":
 	e = elem[2][1];
 	if (e.type !== 'button') {

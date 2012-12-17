@@ -75,6 +75,7 @@ data BasicElement
   | ECollage Int Int [Form]
   | EEmpty
   | EContainer Position Element
+  | ESVG SVG
 
 width w' (Element _ e w h o c l) =
   case e of
@@ -143,7 +144,7 @@ spacer w h = basicNewElement EEmpty w h
 container w h pos e =
   basicNewElement (EContainer pos e) w h
 
-
+svg w h svg = basicNewElement (ESVG svg) w h
 
 data LineStyle = Solid | Dotted | Dashed | Custom [Int]
 data ShapeStyle = Filled | Outlined | CustomOutline [Int] | Textured String
@@ -193,3 +194,10 @@ toForm pos e = Form 0 1 pos (FElement e)
 rotate t (Form theta scale   pos   form) = Form (t+theta) scale pos form
 scale s  (Form theta scale   pos   form) = Form theta (s*scale) pos form
 move x y (Form theta scale (px,py) form) = Form theta scale (x+px,y+py) form
+
+data STransform = STranslate Float Float
+                | SScale Float
+                | SRotate Float
+
+data SVG = STransform STransform [SVG]
+         | SCircle Float

@@ -1,0 +1,2 @@
+change the SVG BasicElement constructor to remove the w/h attributes
+create the recursive data structure to hold SVG nodes
