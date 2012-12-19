@@ -262,6 +262,8 @@ function update(node,curr,next) {
 	update(node.childNodes[0],currE[2],nextE[2]);
 	setPos(nextE[1],node.childNodes[0]);
 	break;
+    case "ESVG":
+        break;
     case "EEmpty":
 	break;
     case "EHtml":
