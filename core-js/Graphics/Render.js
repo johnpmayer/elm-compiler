@@ -263,6 +263,11 @@ function update(node,curr,next) {
 	setPos(nextE[1],node.childNodes[0]);
 	break;
     case "ESVG":
+	if (next[1] !== curr[1]) {
+	    var e = render(next);
+	    node.parentNode.replaceChild(e,node);
+	    node = e;
+	}
         break;
     case "EEmpty":
 	break;
