@@ -1,2 +1,13 @@
 change the SVG BasicElement constructor to remove the w/h attributes
 create the recursive data structure to hold SVG nodes
+
+begin to test adding webkit 3d transforms on <g> svg elements
+
+move all SVG stuff out of Element.elm into SVG.elm, work on making it "native" (compiled by elm2js)
+likewise from Element.js to SVG.js
+
+add more data constructors for Primitives and Transforms.
+
+figure out a good way to represent mesh models. [STriangle] ?
+
+this may rely on a mechanism for declaring svg primitives with vertices in (x,y,z). Can this be native?
