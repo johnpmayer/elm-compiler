@@ -1,4 +1,12 @@
 
 import Mouse
 
-main = (\x -> flow down [svg 101 100 $ sCircle x, svg 100 100 $ sCircle 20]) <~ Mouse.x
+static = svg 40 40 $ sCircle 20
+
+dynamic = \r -> svg 400 400 $ sCircle r
+
+rad = \(x,y) -> sqrt (x * x + y * y)
+
+view = \pos -> flow down [ dynamic $ rad pos, static ]
+
+main = view <~ Mouse.position
