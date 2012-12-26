@@ -9,7 +9,7 @@ do
 	for tgt in $tgts
 	do
 		echo "Core: $tgt"
-		out=`echo $tgt | sed 's/..\/core-js\/\///'`".diff"
+		out=`echo $tgt | sed 's/\//_/g' | sed 's/[.]/_/g'`".diff"
 		echo "Out: $out"
 		git diff $file $tgt > $out
 	done
