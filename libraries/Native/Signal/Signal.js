@@ -172,6 +172,16 @@ Elm.Native.Signal = function(elm) {
       return new SampleOn(delayed, lift2(F2(first), delayed, lift(update,s)));
   }
 
+  function link(s,handle) {
+    s.kids.push({
+      recv : function(timestep, changed, parentID) {
+        if (elm.decay && elm.decay > 0) {
+          setTimeout(function(){ elm.notify(handle, s.value, (elm.decay - 1)) }, 0);
+        }
+      }
+    });
+  }
+
   function Merge(s1,s2) {
       this.id = Utils.guid();
       this.value = s1.value;
