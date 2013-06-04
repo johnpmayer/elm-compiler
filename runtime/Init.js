@@ -30,8 +30,12 @@ Elm.worker = function(module) {
 function init(display, container, module, moduleToReplace) {
   // defining state needed for an instance of the Elm RTS
   var inputs = [];
+  var decay = undefined;
 
-  function notify(id, v) {
+  function notify(id, v, eventDecay) {
+      
+      decay = eventDecay;
+
       var timestep = Date.now();
       var changed = false;
       for (var i = inputs.length; i--; ) {
@@ -59,6 +63,7 @@ function init(display, container, module, moduleToReplace) {
   // create the actual RTS. Any impure modules will attach themselves to this
   // object. This permits many Elm programs to be embedded per document.
   var elm = {
+      decay:decay,
       notify:notify,
       node:container,
       display:display,
