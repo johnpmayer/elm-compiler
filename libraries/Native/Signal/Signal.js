@@ -182,6 +182,13 @@ Elm.Native.Signal = function(elm) {
     });
   }
 
+  function loop(st,i) {
+    var target = new Input(i);
+    var output = st(target);
+    link(output,target.id);
+    return output;
+  }
+
   function Merge(s1,s2) {
       this.id = Utils.guid();
       this.value = s1.value;
@@ -225,6 +232,7 @@ Elm.Native.Signal = function(elm) {
     lift8 : F9(lift8),
     foldp : F3(foldp),
     delay : F2(delay),
+    loop  : F2(loop),
     merge : F2(merge),
     merges : merges,
     count : function(s) { return foldp(F2(function(_,c) { return c+1; }), 0, s); },
