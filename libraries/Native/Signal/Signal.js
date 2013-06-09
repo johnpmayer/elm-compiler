@@ -29,6 +29,42 @@ Elm.Native.Signal = function(elm) {
     elm.inputs.push(this);
   }
 
+  function Loopback(base) {
+    this.value = base;
+    this.kids = [];
+    this.fresh = false;
+    this.feed = function(v) {
+      this.value = v;
+      this.fresh = true;
+      console.log("Looped back: " + v);
+    }
+    this.recv = function(timestep, _eid, _v) {
+      var changed = this.fresh;
+      this.fresh = false;
+      send(this, timestep, changed);
+      return changed;
+    }
+    elm.inputs.push(this);
+  }
+
+  function loop(transform, after, initial) {
+    
+    var loopback = new Loopback(initial);
+
+    var output = transform(loopback);
+    
+    output.kids.push({
+      recv : function(_timestep, changed, _parentID) {
+        if (changed) {
+          loopback.feed(after(output.value));
+        }
+      }
+    })
+
+    return output;
+
+  }
+
   function LiftN(update, args) {
     this.id = Utils.guid();
     this.value = update();
@@ -220,6 +256,7 @@ Elm.Native.Signal = function(elm) {
     dropWhen : F3(dropWhen),
     dropRepeats : function(s) { return new DropRepeats(s);},
     sampleOn : F2(sampleOn),
-    timestamp : timestamp
+    timestamp : timestamp,
+    loop : F3(loop)
   };
 };
