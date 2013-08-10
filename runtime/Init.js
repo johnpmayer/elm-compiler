@@ -2,27 +2,6 @@
 (function() {
 'use strict';
 
-Elm.fullscreen = function(module) {
-    var style = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = "html,head,body { padding:0; margin:0; }" +
-        "body { font-family: calibri, helvetica, arial, sans-serif; }";
-    document.head.appendChild(style);
-    var container = document.createElement('div');
-    document.body.appendChild(container);
-    return init(ElmRuntime.Display.FULLSCREEN, container, module);
-};
-
-Elm.domNode = function(container, module) {
-    var tag = container.tagName;
-    if (tag !== 'DIV') {
-        throw new Error('Elm.node must be given a DIV, not a ' + tag + '.');
-    } else if (container.hasChildNodes()) {
-        throw new Error('Elm.node must be given an empty DIV. No children allowed!');
-    }
-    return init(ElmRuntime.Display.COMPONENT, container, module);
-};
-
 Elm.worker = function(module) {
     return init(ElmRuntime.Display.NONE, {}, module);
 };
@@ -80,10 +59,6 @@ function init(display, container, module, moduleToReplace) {
   }
 
   recv('log', function(e) {console.log(e.value)});
-  recv('title', function(e) {document.title = e.value});
-  recv('redirect', function(e) {
-    if (e.value.length > 0) { window.location = e.value; }
-  });
 
   function swap(newModule) {
       removeListeners(listeners);

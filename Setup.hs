@@ -147,8 +147,8 @@ buildRuntime lbi elmos = do
   createDirectoryIfMissing True (rtsDir lbi)
   writeFile (rts lbi) "Elm = {}; Elm.Native = {}; Elm.Native.Graphics = {};\n\
                       \Elm.Graphics = {}; ElmRuntime = {}; ElmRuntime.Render = {};\n"
-  mapM_ (appendJS lbi) =<< getFiles ".js" "libraries"
-  mapM_ (appendJS lbi) elmos
+  --mapM_ (appendJS lbi) =<< getFiles ".js" "libraries"
+  --mapM_ (appendJS lbi) elmos
   mapM_ (appendJS lbi) =<< getFiles ".js" "runtime"
 
 getFiles ext dir = do
