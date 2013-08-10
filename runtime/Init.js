@@ -2,6 +2,10 @@
 (function() {
 'use strict';
 
+Elm.noscreen = function(module) {
+    return init(undefined, undefined, module);
+}
+
 Elm.worker = function(module) {
     return init(ElmRuntime.Display.NONE, {}, module);
 };
@@ -20,9 +24,6 @@ function init(display, container, module, moduleToReplace) {
       return changed;
   }
 
-  container.offsetX = 0;
-  container.offsetY = 0;
-
   var listeners = [];
   function addListener(relevantInputs, domNode, eventName, func) {
       domNode.addEventListener(eventName, func);
@@ -36,7 +37,7 @@ function init(display, container, module, moduleToReplace) {
   }
 
   // create the actual RTS. Any impure modules will attach themselves to this
-  // object. This permits many Elm programs to be embedded per document.
+  // object. This permits many Elm programs to be embedded per page.
   var elm = {
       notify:notify,
       node:container,
@@ -48,14 +49,10 @@ function init(display, container, module, moduleToReplace) {
 
   // Set up methods to communicate with Elm program from JS.
   function send(name, value) {
-      if (typeof value === 'undefined') return function(v) { return send(name,v); };
-      var e = document.createEvent('Event');
-      e.initEvent(name + '_' + elm.id, true, true);
-      e.value = value;
-      document.dispatchEvent(e);
+      emitter.emit(name + '_' + elm.id, value)
   }
   function recv(name, handler) {
-      document.addEventListener(name + '_' + elm.id, handler);
+      emitter.on(name + '_' + elm.id, handler);
   }
 
   recv('log', function(e) {console.log(e.value)});
@@ -82,17 +79,8 @@ function init(display, container, module, moduleToReplace) {
   }
   inputs = ElmRuntime.filterDeadInputs(inputs);
   filterListeners(inputs, listeners);
-  if (display !== ElmRuntime.Display.NONE) {
-      var graphicsNode = initGraphics(elm, Module);
-  }
   if (typeof moduleToReplace !== 'undefined') {
       ElmRuntime.swap(moduleToReplace, elm);
-
-      // rerender scene if graphics are enabled.
-      if (typeof graphicsNode !== 'undefined') {
-          graphicsNode.value = A2( Elm.Graphics.Element(elm).spacer, 0, 0 );
-          graphicsNode.recv(0, true, 0);
-      }
   }
 
   reportAnyErrors();
@@ -117,40 +105,6 @@ function removeListeners(listeners) {
         var listener = listeners[i];
         listener.domNode.removeEventListener(listener.eventName, listener.func);
     }
-}
-
-function initGraphics(elm, Module) {
-  if (!('main' in Module))
-      throw new Error("'main' is missing! What do I display?!");
-
-  var signalGraph = Module.main;
-
-  // make sure the signal graph is actually a signal & extract the visual model
-  var Signal = Elm.Signal(elm);
-  if (!('recv' in signalGraph)) {
-      signalGraph = Signal.constant(signalGraph);
-  }
-  var currentScene = signalGraph.value;
-  
- // Add the currentScene to the DOM
-  var Render = ElmRuntime.use(ElmRuntime.Render.Element);
-  elm.node.appendChild(Render.render(currentScene));
-  
-  // set up updates so that the DOM is adjusted as necessary.
-  function domUpdate(newScene, currentScene) {
-      ElmRuntime.draw(function(_) {
-          Render.update(elm.node.firstChild, currentScene, newScene);
-          if (elm.Native.Window) elm.Native.Window.resizeIfNeeded();
-      });
-      return newScene;
-  }
-  var renderer = A3(Signal.foldp, F2(domUpdate), currentScene, signalGraph);
-
-  // must check for resize after 'renderer' is created so
-  // that changes show up.
-  if (elm.Native.Window) elm.Native.Window.resizeIfNeeded();
-
-  return renderer;
 }
 
 }());
