@@ -96,7 +96,7 @@ myPostBuild as bfs pd lbi = do
     buildInterfaces lbi elmis
     putStrLn "Custom build step: build elm-runtime.js"
     buildRuntime lbi elmos
-    removeDirectoryRecursive ("dist" </> "temp")
+    --removeDirectoryRecursive ("dist" </> "temp")
     postBuild simpleUserHooks as bfs pd lbi
 
 

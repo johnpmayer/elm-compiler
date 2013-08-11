@@ -48,7 +48,9 @@ Elm.Native.Signal = function(elm) {
         count = 0;
       }
     };
-    for (var i = n; i--; ) { args[i].kids.push(this); }
+    for (var i = n; i--; ) { 
+      args[i].kids.push(this); 
+    }
   }
 
   function lift(func, a) {
