@@ -18,13 +18,19 @@ Elm.Native.CLI = function(elm) {
     elm.notify(stdin.id, line);
   });
 
-  var print = function(line) {
-    rl.write('Print:' + line + '\n');
-    return line;
-  }
-
   /* Signal JSString -> Signal JSString */
   var stdouteffect = function(input) {
+    var first = true;
+
+    var print = function(line) {
+      if (first) {
+        first = false;
+        return line;
+      }
+      rl.write(line + '\n');
+      return line;
+    }
+
     var node = Signal.lift(print)(input);
     return node;
   }
