@@ -53,6 +53,52 @@ Elm.Native.Graphics.Input = function(elm) {
      return Tuple2(Signal.constant(element), events);
  }
 
+ function group(defaultValue, builder, commands) {
+   var events = Signal.constant(defaultValue);
+
+   function Merger (tag, update) {
+     this.recv = function(timestamp, changed, parentID) {
+       if (changed) {
+         var value = update()
+         var msg = {
+           ctor : "Event",
+           _0 : tag,
+           _1 : value
+         };
+         elm.notify(events.id, msg);
+       }
+     }
+   }
+
+   function add(timestamp, addData) {
+     var tag = addData._0;
+     var newInput = builder(addData._1);
+     var msg = {
+       ctor : "Added",
+       _0 : tag,
+       _1 : newInput.view.value
+     };
+     elm.notify(events.id, msg);
+     var listener = new Merger(tag, function(){
+       return newInput.events.value;
+     });
+     newInput.events.kids.push(listener);
+     listener.recv(timestamp, true, newInput.events.id);
+   }
+
+   function CommandListener() {
+     this.recv = function(timestamp, changed, parentID) {
+       if(changed) {
+         add(timestamp, commands.value);
+       }
+     }
+   }
+
+   commands.kids.push(new CommandListener());
+
+   return events;
+ }
+
  function buttons(defaultValue) {
      var events = Signal.constant(defaultValue);
 
@@ -291,6 +337,7 @@ Elm.Native.Graphics.Input = function(elm) {
  }
 
  return elm.Native.Graphics.Input = {
+     group:F3(group),
      buttons:buttons,
      customButtons:customButtons,
      hoverables:hoverables,

@@ -11,6 +11,15 @@ import JavaScript (JSString)
 
 id x = x
 
+type Input a = { view : Signal Element, events : Signal a }
+
+data Command tag config = Add tag config
+data Event tag value = Added tag Element | Event tag value
+
+-- Create a group of fields of any flavor
+group : value -> (config -> Input value) -> Signal (Command tag config) -> Signal (Event tag value)
+group = Native.Graphics.Input.group
+
 -- Create a group of buttons.
 --
 -- * The first argument is the default value of the `events` signal.
