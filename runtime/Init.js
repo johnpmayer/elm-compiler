@@ -27,6 +27,10 @@ Elm.worker = function(module) {
     return init(ElmRuntime.Display.NONE, {}, module);
 };
 
+Elm.node = function(module) {
+    return init(ElmRuntime.Display.NODE, {}, module);
+};
+
 function init(display, container, module, moduleToReplace) {
   // defining state needed for an instance of the Elm RTS
   var inputs = [];
@@ -67,16 +71,35 @@ function init(display, container, module, moduleToReplace) {
       inputs:inputs
   };
 
-  // Set up methods to communicate with Elm program from JS.
-  function send(name, value) {
+  var send, recv;
+  if (display !== ElmRuntime.Display.NODE) {
+    
+    // Set up methods to communicate with Elm program from JS.
+    
+    send = function(name, value) {
       if (typeof value === 'undefined') return function(v) { return send(name,v); };
       var e = document.createEvent('Event');
       e.initEvent(name + '_' + elm.id, true, true);
       e.value = value;
       document.dispatchEvent(e);
-  }
-  function recv(name, handler) {
+    }
+
+    recv = function(name, handler) {
       document.addEventListener(name + '_' + elm.id, handler);
+    }
+  
+  } else {
+
+    // TODO
+    
+    send = function(name, value) {
+      emitter.emit(name + '_' + elm.id, value)
+    }
+
+    recv = function(name, handler) {
+      emitter.on(name + '_' + elm.id, handler)
+    }
+
   }
 
   recv('log', function(e) {console.log(e.value)});
@@ -101,13 +124,17 @@ function init(display, container, module, moduleToReplace) {
   try {
       Module = module(elm);
   } catch(e) {
-      var directions = "<br/>&nbsp; &nbsp; Open the developer console for more details."
-      Module.main = Elm.Text(elm).text('<code>' + e.message + directions + '</code>');
-      reportAnyErrors = function() { throw e; }
+      if (display !== ElmRuntime.Display.NODE) {
+        var directions = "<br/>&nbsp; &nbsp; Open the developer console for more details.";
+        Module.main = Elm.Text(elm).text('<code>' + e.message + directions + '</code>');
+        reportAnyErrors = function() { throw e; }
+      } else {
+        throw e;
+      }e
   }
   inputs = ElmRuntime.filterDeadInputs(inputs);
   filterListeners(inputs, listeners);
-  if (display !== ElmRuntime.Display.NONE) {
+  if (display !== ElmRuntime.Display.NONE && display !== ElmRuntime.Display.NODE) {
       var graphicsNode = initGraphics(elm, Module);
   }
   if (typeof moduleToReplace !== 'undefined') {
@@ -146,6 +173,8 @@ function removeListeners(listeners) {
 function initGraphics(elm, Module) {
   if (!('main' in Module))
       throw new Error("'main' is missing! What do I display?!");
+
+  ElmRuntime.setupBrowser();
 
   var signalGraph = Module.main;
 
