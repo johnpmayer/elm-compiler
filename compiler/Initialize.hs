@@ -20,8 +20,8 @@ import qualified Type.Inference as TI
 import qualified Type.Constrain.Declaration as TcDecl
 import qualified Transform.Canonicalize as Canonical
 
-buildFromSource :: Bool -> Interfaces -> String -> Either [Doc] (MetadataModule () ())
-buildFromSource noPrelude interfaces source =
+buildFromSource :: Bool -> Bool -> Interfaces -> String -> Either [Doc] (MetadataModule () ())
+buildFromSource noPrelude tgtNode interfaces source =
   do let add = if noPrelude then id else Prelude.add
          infixes = Map.fromList . map (\(assoc,lvl,op) -> (op,(lvl,assoc)))
                  . concatMap iFixities $ Map.elems interfaces
@@ -57,7 +57,7 @@ buildFromSource noPrelude interfaces source =
            foreignExports = [ (evt,name,typ) | ExportEvent evt name typ <- decls ]
           }
 
-     types <- TI.infer interfaces metaModule
+     types <- TI.infer tgtNode interfaces metaModule
 
      return $ metaModule { types = types }
 

@@ -25,8 +25,8 @@ import System.IO.Unsafe  -- Possible to switch over to the ST monad instead of
                          -- the IO monad. I don't think that'd be worthwhile.
 
 
-infer :: Interfaces -> MetadataModule t v -> Either [Doc] (Map.Map String Type)
-infer interfaces modul = unsafePerformIO $ do
+infer :: Bool -> Interfaces -> MetadataModule t v -> Either [Doc] (Map.Map String Type)
+infer isNode interfaces modul = unsafePerformIO $ do
   env <- Env.initialEnvironment
              (datatypes modul ++ concatMap iAdts (Map.elems interfaces))
              (aliases modul ++ concatMap iAliases (Map.elems interfaces))
@@ -55,4 +55,4 @@ infer interfaces modul = unsafePerformIO $ do
       let rules = Alias.rules interfaces modul
       case TS.sErrors state of
         errors@(_:_) -> Left `fmap` sequence (map ($ rules) (reverse errors))
-        [] -> extraChecks rules (Map.difference (TS.sSavedEnv state) header)
+        [] -> extraChecks isNode rules (Map.difference (TS.sSavedEnv state) header)

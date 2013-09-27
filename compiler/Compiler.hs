@@ -43,6 +43,7 @@ data Flags =
           , scripts :: [FilePath]
           , no_prelude :: Bool
           , minify :: Bool
+          , node :: Bool
 	  , cache_dir :: FilePath
 	  , build_dir :: FilePath
           }
@@ -66,6 +67,8 @@ flags = Flags
                  &= help "Do not import Prelude by default, used only when compiling standard libraries."
   , minify = False
              &= help "Minify generated JavaScript and HTML"
+  , node = False
+             &= help "Target nodejs"
   , cache_dir = "cache" &= typFile
                 &= help "Directory for files cached to make builds faster. Defaults to cache/ directory."
   , build_dir = "build" &= typFile
@@ -136,7 +139,7 @@ buildFile flags moduleNum numModules interfaces filePath =
         createDirectoryIfMissing True (cache_dir flags)
         createDirectoryIfMissing True (build_dir flags)
         metaModule <-
-            case buildFromSource (no_prelude flags) interfaces source of
+            case buildFromSource (no_prelude flags) (node flags) interfaces source of
               Left errors -> do
                   mapM print (List.intersperse (P.text " ") errors)
                   exitFailure

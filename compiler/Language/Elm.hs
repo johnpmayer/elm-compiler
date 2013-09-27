@@ -24,7 +24,7 @@ import Paths_Elm
 --  an error message or the compiled JS code.
 compile :: String -> Either String String
 compile source =
-    case buildFromSource False Prelude.interfaces source of
+    case buildFromSource False False Prelude.interfaces source of
       Left docs -> Left . unlines . List.intersperse "" $ map P.render docs
       Right modul -> Right $ jsModule (modul :: MetadataModule () ())
 

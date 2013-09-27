@@ -14,13 +14,15 @@ import SourceSyntax.PrettyPrint (pretty)
 import SourceSyntax.Type (Type)
 import qualified Data.Traversable as Traverse
 
-extraChecks :: Alias.Rules -> Env -> IO (Either [P.Doc] (Map.Map String Type))
-extraChecks rules env = do
+extraChecks :: Bool -> Alias.Rules -> Env -> IO (Either [P.Doc] (Map.Map String Type))
+extraChecks isNode rules env = do
   eitherEnv <- occursCheck env
   case eitherEnv of
     Left errs -> return $ Left errs
     Right env' ->
-        mainCheck rules <$> Traverse.traverse toSrcType env'
+        if isNode
+        then Right <$> Traverse.traverse toSrcType env'
+        else mainCheck rules <$> Traverse.traverse toSrcType env'
            
 
 mainCheck :: Alias.Rules -> (Map.Map String Type) -> Either [P.Doc] (Map.Map String Type)
