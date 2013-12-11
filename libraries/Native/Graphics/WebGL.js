@@ -102,6 +102,10 @@ Elm.Native.Graphics.WebGL.make = function(elm) {
                     // and then bind each one-at-a-time
                     var data = [];
                     List.each(function(elem){
+                        data.push(elem[attribute.name][0]);
+                        data.push(elem[attribute.name][1]);
+                        data.push(elem[attribute.name][2]);
+                        /*
                         data.push(elem._0[attribute.name][0]);
                         data.push(elem._0[attribute.name][1]);
                         data.push(elem._0[attribute.name][2]);
@@ -111,6 +115,7 @@ Elm.Native.Graphics.WebGL.make = function(elm) {
                         data.push(elem._2[attribute.name][0]);
                         data.push(elem._2[attribute.name][1]);
                         data.push(elem._2[attribute.name][2]);
+                        */
                     }, bufferElems);
                     var array = new Float32Array(data);
 
@@ -130,7 +135,7 @@ Elm.Native.Graphics.WebGL.make = function(elm) {
 
         }
 
-        var numIndices = 3 * List.length(bufferElems);
+        var numIndices = List.length(bufferElems);
         var indices = List.toArray(List.range(0, numIndices - 1));
         console.log("Created index buffer");
         var indexBuffer = gl.createBuffer();

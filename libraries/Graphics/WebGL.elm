@@ -1,4 +1,4 @@
-module Graphics.WebGL (link, mapTriangle, zipTriangle, bind, encapsulate, webgl) where
+module Graphics.WebGL (link, bind, encapsulate, webgl) where
 
 {-| WebGL -}
 
@@ -15,20 +15,9 @@ link = Native.Graphics.WebGL.link
 -- Binder really should not need a program
 -- I need runtime type information from something though...
 
-type Triangle a = (a,a,a)
-
-triangle : a -> a -> a -> Triangle a
-triangle = (,,)
-
-mapTriangle : (a -> b) -> Triangle a -> Triangle b
-mapTriangle f (x,y,z) = (f x, f y, f z)
-
-zipTriangle : (a -> b -> c) -> Triangle a -> Triangle b -> Triangle c
-zipTriangle f (x,y,z) (x',y',z') = (f x x', f y y', f z z')
-
 data Buffer a = Dummy_Buffer
 
-bind : [Triangle a] -> Buffer a
+bind : [a] -> Buffer a
 bind = Native.Graphics.WebGL.bind
 
 -- Now I cheat here because elm lacks existential types or rank-n

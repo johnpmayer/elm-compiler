@@ -1,6 +1,6 @@
 
 import MJS (V3,v3,M4x4,m4x4makeRotate)
-import Graphics.WebGL (Program, link, Triangle, zipTriangle, Buffer, bind, Model, encapsulate, webgl)
+import Graphics.WebGL (Program, link, Triangle, Buffer, bind, Model, encapsulate, webgl)
 
 -- Define what our geometry looks like
 
@@ -13,10 +13,10 @@ red = v3 1 0 0
 green = v3 0 1 0
 blue = v3 0 0 1
 
-colors = [(red,green,blue),(red,green,blue)]
+colors = [red,green,blue,red,green,blue]
 
-mesh : [Triangle {pos : V3, color : V3}]
-mesh = zipWith (zipTriangle (\pos color -> { pos = pos, color = color })) [(topleft, topright, botleft), (topright, botleft, botright)] colors
+mesh : [{pos : V3, color : V3}]
+mesh = zipWith (\pos color -> { pos = pos, color = color }) [topleft, topright, botleft, topright, botleft, botright] colors
 
 vert = [glShader|
 attribute vec3 pos;
