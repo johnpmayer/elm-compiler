@@ -35,7 +35,8 @@ Library
                        Elm.Internal.Name,
                        Elm.Internal.Paths,
                        Elm.Internal.Utils,
-                       Elm.Internal.Version
+                       Elm.Internal.Version,
+                       Language.Elm.Syntax
   Hs-Source-Dirs:      compiler
   other-modules:       SourceSyntax.Declaration,
                        SourceSyntax.Expression,
