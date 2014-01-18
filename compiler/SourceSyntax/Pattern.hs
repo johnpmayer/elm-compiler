@@ -8,9 +8,9 @@ import           Text.PrettyPrint as PP
 import qualified Data.Set as Set
 import           SourceSyntax.Literal as Literal
 
-data Pattern = PAnything
+data Pattern = PVar LowIdent
+             | PAnything
              | PLiteral Literal.Literal
-             | PVar LowIdent
              | PNil
              | PCons Pattern Pattern
              | PTuple [Pattern]
@@ -34,9 +34,9 @@ tuple = PTuple
 boundVars :: Pattern -> Set.Set String
 boundVars pattern = 
     case pattern of
+      PVar x -> Set.singleton . unLow $ x
       PAnything -> Set.empty
       PLiteral _ -> Set.empty
-      PVar x -> Set.singleton . unLow $ x
       PNil -> Set.empty
       PCons h t -> Set.unions . map boundVars $ [h,t]
       PTuple es -> Set.unions (map boundVars es)
@@ -47,9 +47,9 @@ boundVars pattern =
 instance Pretty Pattern where
   pretty pattern = 
     case pattern of
+      PVar x -> PP.text . unLow $ x
       PAnything -> PP.text "_"
       PLiteral lit -> pretty lit
-      PVar x -> PP.text . unLow $ x
       PNil -> PP.text "[]"
       PCons h t -> prettyParens h <+> PP.text "::" <+> pretty t
       PTuple es -> PP.parens . commaCat . map prettyParens $ es
