@@ -11,9 +11,10 @@ import qualified Parse.Type as Type
 import Parse.Binop
 import Parse.Literal
 
+import SourceSyntax.Identifier
+import qualified SourceSyntax.Literal as Literal
 import SourceSyntax.Location as Location
 import SourceSyntax.Pattern hiding (tuple,list)
-import qualified SourceSyntax.Literal as Literal
 import SourceSyntax.Expression
 
 
@@ -31,7 +32,7 @@ accessor :: IParser ParseExpr
 accessor = do
   (start, lbl, end) <- located (try (string "." >> rLabel))
   let loc e = Location.at start end e
-  return (Lambda (PVar "_") (loc $ Access (loc $ Var "_") lbl))
+  return (Lambda (PVar (LowIdent "r")) (loc $ Access (loc $ Var "r") lbl))
 
 negative :: IParser ParseExpr
 negative = do
@@ -72,7 +73,7 @@ parensTerm = try (parens opFn) <|> parens (tupleFn <|> parened)
     opFn = do
       (start, op, end) <- located anyOp
       let loc = Location.at start end
-      return . loc . Lambda (PVar "x") . loc . Lambda (PVar "y") . loc $
+      return . loc . Lambda (PVar (LowIdent "x")) . loc . Lambda (PVar (LowIdent "y")) . loc $
              Binop op (loc $ Var "x") (loc $ Var "y")
 
     tupleFn = do
@@ -81,7 +82,7 @@ parensTerm = try (parens opFn) <|> parens (tupleFn <|> parened)
       let vars = map (('v':) . show) [ 0 .. length commas + 1 ]
           loc = Location.at start end
       return $ foldr (\x e -> loc $ Lambda x e)
-                 (loc . tuple $ map (loc . Var) vars) (map PVar vars)
+                 (loc . tuple $ map (loc . Var) vars) (map (PVar . LowIdent) vars)
     
     parened = do
       (start, es, end) <- located (commaSep expr)
@@ -199,7 +200,7 @@ defStart :: IParser [Pattern]
 defStart =
     choice [ do p1 <- try Pattern.term
                 infics p1 <|> func p1
-           , func =<< (PVar <$> parens symOp)
+           , func =<< (PVar . LowIdent<$> parens symOp)
            , (:[]) <$> Pattern.expr
            ] <?> "the definition of a variable (x = ...)"
     where
@@ -212,8 +213,8 @@ defStart =
       infics p1 = do
         o:p <- try (whitespace >> anyOp)
         p2  <- (whitespace >> Pattern.term)
-        return $ if o == '`' then [ PVar $ takeWhile (/='`') p, p1, p2 ]
-                             else [ PVar (o:p), p1, p2 ]
+        return $ if o == '`' then [ PVar . LowIdent $ takeWhile (/='`') p, p1, p2 ]
+                             else [ PVar . LowIdent $ (o:p), p1, p2 ]
 
 makeFunction :: [Pattern] -> LParseExpr -> LParseExpr
 makeFunction args body@(L s _) =

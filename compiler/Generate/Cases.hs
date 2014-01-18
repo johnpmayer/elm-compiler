@@ -6,10 +6,11 @@ import Control.Monad.State
 import Data.List (groupBy,sortBy)
 import Data.Maybe (fromMaybe)
 
+import SourceSyntax.Expression
+import SourceSyntax.Identifier
 import SourceSyntax.Location
 import SourceSyntax.Literal
 import SourceSyntax.Pattern
-import SourceSyntax.Expression
 import Transform.Substitute
 
 
@@ -69,7 +70,7 @@ match vs@(v:_) cs def
 
 dealias v c@(p:ps, L s e) =
     case p of
-      PAlias x pattern -> (pattern:ps, L s $ subst x (Var v) e)
+      PAlias x pattern -> (pattern:ps, L s $ subst (unLow x) (Var v) e)
       _ -> c
 
 matchVar :: [String] -> [([Pattern],LExpr)] -> Match -> State Int Match
@@ -79,10 +80,10 @@ matchVar (v:vs) cs def = match vs (map subVar cs) def
         where
           subOnePattern pattern e =
             case pattern of
-              PVar x     -> subst x (Var v) e
+              PVar x     -> subst (unLow x) (Var v) e
               PAnything  -> e
               PRecord fs ->
-                 foldr (\x -> subst x (Access (L s (Var v)) x)) e fs
+                 foldr (\x -> subst (unLow x) (Access (L s (Var v)) (unLow x))) e fs
 
 matchCon :: [String] -> [([Pattern],LExpr)] -> Match -> State Int Match
 matchCon (v:vs) cs def = (flip (Match v) def) <$> mapM toClause css
@@ -101,7 +102,7 @@ matchCon (v:vs) cs def = (flip (Match v) def) <$> mapM toClause css
 
       toClause cs =
         case head cs of
-          (PData name _ : _, _) -> matchClause (Left name) (v:vs) cs Break
+          (PData name _ : _, _) -> matchClause (Left (unCap name)) (v:vs) cs Break
           (PLiteral lit : _, _) -> matchClause (Right lit) (v:vs) cs Break
 
 matchClause :: Either String Literal

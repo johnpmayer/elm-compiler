@@ -3,6 +3,7 @@ module Type.Constrain.Declaration where
 
 import SourceSyntax.Declaration
 import qualified SourceSyntax.Expression as E
+import SourceSyntax.Identifier
 import qualified SourceSyntax.Location as L
 import qualified SourceSyntax.Pattern as P
 import qualified SourceSyntax.Type as T
@@ -57,7 +58,7 @@ arguments = map (:[]) ['a'..'z'] ++ map (\n -> "_" ++ show (n :: Int)) [1..]
 
 buildFunction :: E.LExpr -> [String] -> E.LExpr
 buildFunction body@(L.L s _) vars =
-    foldr (\p e -> L.L s (E.Lambda p e)) body (map P.PVar vars)
+    foldr (\p e -> L.L s (E.Lambda p e)) body (map (P.PVar . LowIdent) vars)
 
 definition :: String -> E.LExpr -> T.Type -> E.Def
-definition name expr tipe = E.Definition (P.PVar name) expr (Just tipe)
+definition name expr tipe = E.Definition (P.PVar (LowIdent name)) expr (Just tipe)

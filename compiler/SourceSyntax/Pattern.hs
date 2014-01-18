@@ -26,6 +26,9 @@ data Pattern = PVar LowIdent
              | PAlias LowIdent Pattern
                deriving (Eq, Ord, Show)
 
+list :: [Pattern] -> Pattern
+list = foldr PCons PNil
+
 boundVars :: Pattern -> Set.Set String
 boundVars pattern = 
     case pattern of

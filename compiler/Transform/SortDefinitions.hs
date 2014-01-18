@@ -5,6 +5,7 @@ import Control.Monad.State
 import Control.Applicative ((<$>),(<*>))
 import qualified Data.Map as Map
 import SourceSyntax.Expression
+import SourceSyntax.Identifier
 import SourceSyntax.Location
 import qualified SourceSyntax.Pattern as P
 import qualified Data.Graph as Graph
@@ -15,11 +16,14 @@ ctors :: P.Pattern -> [String]
 ctors pattern =
     case pattern of
       P.PVar _ -> []
-      P.PAlias _ p -> ctors p
-      P.PData ctor ps -> ctor : concatMap ctors ps
-      P.PRecord _ -> []
       P.PAnything -> []
       P.PLiteral _ -> []
+      P.PNil -> []
+      P.PCons h t -> concatMap ctors [h,t]
+      P.PTuple es -> concatMap ctors es
+      P.PAlias _ p -> ctors p
+      P.PData ctor ps -> (unCap ctor) : concatMap ctors ps
+      P.PRecord _ -> []
 
 free :: String -> State (Set.Set String) ()
 free x = modify (Set.insert x)

@@ -4,6 +4,7 @@ module Transform.Definition where
 import Control.Applicative ((<$>))
 import qualified SourceSyntax.Pattern as P
 import SourceSyntax.Expression
+import SourceSyntax.Identifier
 import qualified Transform.Expression as Expr
 
 combineAnnotations :: [ParseDef] -> Either String [Def]
@@ -16,7 +17,7 @@ combineAnnotations = go
 
       go defs =
           case defs of
-            TypeAnnotation name tipe : Def pat@(P.PVar name') expr : rest | name == name' ->
+            TypeAnnotation name tipe : Def pat@(P.PVar name') expr : rest | name == (unLow name') ->
                 do expr' <- exprCombineAnnotations expr
                    let def = Definition pat expr' (Just tipe)
                    (:) def <$> go rest
