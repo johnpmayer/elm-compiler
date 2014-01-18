@@ -19,11 +19,15 @@ ctors pattern =
       P.PAnything -> []
       P.PLiteral _ -> []
       P.PNil -> []
-      P.PCons h t -> concatMap ctors [h,t]
-      P.PTuple es -> concatMap ctors es
+      P.PCons h t -> "::" : concatMap ctors [h,t]
+      P.PTuple es -> "_Tuple" ++ (show . length $ es ) : concatMap ctors es
       P.PAlias _ p -> ctors p
       P.PData ctor ps -> (unCap ctor) : concatMap ctors ps
       P.PRecord _ -> []
+
+ctorsLHS :: LHS -> [String]
+ctorsLHS (Val pat) = ctors pat
+ctorsLHS _ = []
 
 free :: String -> State (Set.Set String) ()
 free x = modify (Set.insert x)
@@ -103,8 +107,8 @@ reorder (L s expr) =
              let defss = map Graph.flattenSCC sccs
              
              -- remove let-bound variables from the context
-             forM_ defs $ \(Definition pattern _ _) -> do
-                bound (P.boundVars pattern)
+             forM_ defs $ \(Definition lhs _ _) -> do
+                bound (boundVarsLHS lhs)
                 mapM free (ctors pattern)
 
              let L _ let' = foldr (\ds bod -> L s (Let ds bod)) body' defss

@@ -13,11 +13,12 @@ import qualified Generate.Cases as Case
 import qualified Generate.JavaScript.Ports as Port
 import qualified Generate.Markdown as MD
 import qualified SourceSyntax.Helpers as Help
-import SourceSyntax.Literal
-import SourceSyntax.Pattern as Pattern
-import SourceSyntax.Location
 import SourceSyntax.Expression
+import SourceSyntax.Identifier
+import SourceSyntax.Literal
+import SourceSyntax.Location
 import SourceSyntax.Module
+import SourceSyntax.Pattern as Pattern
 import Language.ECMAScript3.Syntax
 import Language.ECMAScript3.PrettyPrint
 import qualified Transform.SafeNames as MakeSafe
@@ -106,7 +107,7 @@ expression (L span expr) =
                 case pattern of
                   PVar x -> return (args ++ [x], body)
                   _ -> do arg <- Case.newVar
-                          return (args ++ [arg], L s (Case (L s (Var arg)) [(pattern, body)]))
+                          return (args ++ [unLow arg], L s (Case (L s (Var arg)) [(pattern, body)]))
 
             (patterns, innerBody) = collect [p] e
 
@@ -215,7 +216,7 @@ definition (Definition pattern expr@(L span _) _) = do
               | otherwise = assign "$raw" : safeAssign : vars
 
           safeAssign = varDecl "$" (CondExpr () if' (obj "$raw") exception)
-          if' = InfixExpr () OpStrictEq (obj "$raw.ctor") (string name)
+          if' = InfixExpr () OpStrictEq (obj "$raw.ctor") (string (unCap name))
           exception = obj "_E.Case" `call` [ref "$moduleName", string (show span)]
 
     _ ->

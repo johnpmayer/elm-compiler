@@ -7,10 +7,12 @@ of the compilation process. I expect there to be more phases as we begin to
 enrich the AST with more information.
 -}
 
+import qualified Data.Set as Set
 
 import SourceSyntax.PrettyPrint
 import Text.PrettyPrint as P
 import qualified SourceSyntax.Helpers as Help
+import qualified SourceSyntax.Identifier as Ident
 import qualified SourceSyntax.Location as Location
 import qualified SourceSyntax.Pattern as Pattern
 import qualified SourceSyntax.Type as SrcType
@@ -55,6 +57,35 @@ data Expr' def
     | PortIn String SrcType.Type
     | PortOut String SrcType.Type (LExpr' def)
 
+{-| LHS of a definition. It can be a regular pattern, as in 
+ - (a,b) = ...
+ - or it can be a function definition, as in
+ - f a b c = ...
+ - or 
+ - a + b = ... 
+ - represented as 
+ - (+) a b = ...
+ -}
+
+data LHS 
+  = Val Pattern.Pattern 
+  | Fun Ident.LowIdent 
+  | Op Ident.Operator 
+
+boundVarsLHS :: LHS -> Set.Set String
+boundVarsLHS lhs = 
+  case lhs of
+    Val pat -> Pattern.boundVars pat
+    Fun fname -> Set.singleton . Ident.unLow $ fname
+    Op symbol -> Set.singleton . Ident.unOp $ symbol
+
+matchNameLHS :: String -> LHS -> Bool
+matchNameLHS name lhs =
+  case lhs of
+    Val (Pattern.PVar name') -> name == Ident.unLow name' 
+    Val _ -> False
+    Fun name' -> name == Ident.unLow name' 
+    Op name' -> name == Ident.unOp name' 
 
 ---- SPECIALIZED ASTs ----
 
@@ -66,7 +97,7 @@ type ParseExpr = Expr' ParseDef
 type LParseExpr = LExpr' ParseDef
 
 data ParseDef
-    = Def Pattern.Pattern LParseExpr
+    = Def LHS LParseExpr
     | TypeAnnotation String SrcType.Type
       deriving (Show)
 
@@ -77,7 +108,7 @@ them into a Def that is easier to work with in later phases of compilation.
 type LExpr = LExpr' Def
 type Expr = Expr' Def
 
-data Def = Definition Pattern.Pattern LExpr (Maybe SrcType.Type)
+data Def = Definition LHS LExpr (Maybe SrcType.Type)
     deriving (Show)
 
 
@@ -96,6 +127,16 @@ saveEnvName = "_save_the_environment!!!"
 dummyLet :: Pretty def => [def] -> LExpr' def
 dummyLet defs = 
      Location.none $ Let defs (Location.none $ Var saveEnvName)
+
+instance Show LHS where
+  show = render . pretty
+
+instance Pretty LHS where
+  pretty lhs = 
+    case lhs of
+      Val pattern -> pretty pattern
+      Fun low -> pretty low
+      Op op -> pretty op
 
 instance Pretty def => Show (Expr' def) where
   show = render . pretty

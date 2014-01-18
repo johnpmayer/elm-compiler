@@ -51,7 +51,7 @@ duplicates decls =
               D.Out name expr _ -> (name, [expr])
               D.In name _ -> (name, [])
 
-    getNames = Set.toList . Pattern.boundVars
+    getNames = Set.toList . Pattern.boundVarsLHS
 
     exprDups :: E.LExpr -> Either String E.LExpr
     exprDups expr = Expr.crawlLet defsDups expr

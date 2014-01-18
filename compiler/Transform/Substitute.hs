@@ -24,9 +24,9 @@ subst old new expr =
           | anyShadow -> expr
           | otherwise -> Let (map substDef defs) (f body)
         where
-          substDef (Definition p e t) = Definition p (f e) t
+          substDef (Definition lhs e t) = Definition lhs (f e) t
           anyShadow =
-              any (Set.member old . Pattern.boundVars) [ p | Definition p _ _ <- defs ]
+              any (Set.member old . boundVarsLHS) [ lhs | Definition lhs _ _ <- defs ]
 
       Var x -> if x == old then new else expr
       Case e cases -> Case (f e) $ map (second f) cases

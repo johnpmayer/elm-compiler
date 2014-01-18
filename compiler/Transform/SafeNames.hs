@@ -3,12 +3,14 @@ module Transform.SafeNames (metadataModule) where
 
 import Control.Arrow (first, (***))
 import SourceSyntax.Expression
+import SourceSyntax.Identifier
 import SourceSyntax.Location
 import SourceSyntax.Module
 import SourceSyntax.Pattern
 import qualified Data.Set as Set
 import qualified Parse.Helpers as PHelp
 
+-- The var function ought to be moved inside of the SourceSyntax.Identifier
 var :: String -> String
 var = dereserve . deprime
   where
@@ -20,12 +22,15 @@ var = dereserve . deprime
 pattern :: Pattern -> Pattern
 pattern pat =
     case pat of
-      PVar x -> PVar (var x)
-      PLiteral _ -> pat
-      PRecord fs -> PRecord (map var fs)
-      PAnything -> pat
-      PAlias x p -> PAlias (var x) (pattern p)
+      PVar x        -> PVar (lowmap var x)
+      PAnything     -> pat
+      PLiteral _    -> pat
+      PNil          -> pat
+      PCons p1 p2   -> PCons (pattern p1) (pattern p2)
+      PTuple es     -> PTuple $ map pattern es
       PData name ps -> PData name (map pattern ps)
+      PRecord fs    -> PRecord (map (lowmap var) fs)
+      PAlias x p    -> PAlias (lowmap var x) (pattern p)
 
 expression :: LExpr -> LExpr
 expression (L loc expr) =

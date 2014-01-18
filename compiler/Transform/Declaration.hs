@@ -43,9 +43,9 @@ combineAnnotations = go
 
                   TypeAnnotation name tipe ->
                       case defRest of
-                        D.Definition (Def pat@(P.PVar name') expr) : rest | name == (unLow name') ->
+                        D.Definition (Def lhs expr) : rest | matchNameLHS name lhs ->
                             do expr' <- exprCombineAnnotations expr
-                               let def' = E.Definition pat expr' (Just tipe)
+                               let def' = E.Definition lhs expr' (Just tipe)
                                (:) (D.Definition def') <$> go rest
 
                         _ -> Left (msg name)
