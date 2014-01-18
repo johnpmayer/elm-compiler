@@ -1,11 +1,18 @@
 {-# OPTIONS_GHC -Wall #-}
+
+{-
+ - This module defines the AST for patterns,
+ - as in pattern matching. It includes the
+ - special sugar for nil, cons, and tuples
+ -}
+
 module SourceSyntax.Pattern where
 
-import qualified SourceSyntax.Helpers as Help
+import qualified Data.Set as Set
+import           Text.PrettyPrint as PP
+
 import           SourceSyntax.Identifier
 import           SourceSyntax.PrettyPrint
-import           Text.PrettyPrint as PP
-import qualified Data.Set as Set
 import           SourceSyntax.Literal as Literal
 
 data Pattern = PVar LowIdent
@@ -18,18 +25,6 @@ data Pattern = PVar LowIdent
              | PRecord [LowIdent]
              | PAlias LowIdent Pattern
                deriving (Eq, Ord, Show)
-
-cons :: Pattern -> Pattern -> Pattern
-cons h t = PCons h t
-
-nil :: Pattern
-nil = PNil
-
-list :: [Pattern] -> Pattern
-list = foldr cons nil
-
-tuple :: [Pattern] -> Pattern
-tuple = PTuple
 
 boundVars :: Pattern -> Set.Set String
 boundVars pattern = 
