@@ -40,6 +40,7 @@ Library
   other-modules:       SourceSyntax.Declaration,
                        SourceSyntax.Expression,
                        SourceSyntax.Helpers,
+                       SourceSyntax.Identifier,
                        SourceSyntax.Literal,
                        SourceSyntax.Location,
                        SourceSyntax.Module,
@@ -122,6 +123,7 @@ Executable elm
   other-modules:       SourceSyntax.Declaration,
                        SourceSyntax.Expression,
                        SourceSyntax.Helpers,
+                       SourceSyntax.Identifier,
                        SourceSyntax.Literal,
                        SourceSyntax.Location,
                        SourceSyntax.Module,
@@ -203,6 +205,7 @@ Executable elm-doc
   other-modules:       SourceSyntax.Declaration,
                        SourceSyntax.Expression,
                        SourceSyntax.Helpers,
+                       SourceSyntax.Identifier,
                        SourceSyntax.Literal,
                        SourceSyntax.Location,
                        SourceSyntax.Module,
@@ -243,6 +246,7 @@ Test-Suite test-elm
                    Tests.Property
                    Tests.Property.Arbitrary
                    SourceSyntax.Helpers
+                   SourceSyntax.Identifier,
                    SourceSyntax.Literal
                    SourceSyntax.PrettyPrint
   build-depends:   base,
