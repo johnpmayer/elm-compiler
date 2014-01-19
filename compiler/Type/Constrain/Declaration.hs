@@ -61,4 +61,4 @@ buildFunction body@(L.L s _) vars =
     foldr (\p e -> L.L s (E.Lambda p e)) body (map (P.PVar . LowIdent) vars)
 
 definition :: String -> E.LExpr -> T.Type -> E.Def
-definition name expr tipe = E.Definition (P.PVar (LowIdent name)) expr (Just tipe)
+definition name expr tipe = E.Definition (E.Val . P.PVar . LowIdent $ name) expr (Just tipe)

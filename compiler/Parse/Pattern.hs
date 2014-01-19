@@ -58,3 +58,4 @@ expr :: IParser Pattern
 expr = do
   patterns <- consSep1 (patternConstructor <|> term)
   asPattern (foldr1 Pattern.PCons patterns) <?> "pattern"
+

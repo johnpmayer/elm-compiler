@@ -20,7 +20,7 @@ ctors pattern =
       P.PLiteral _ -> []
       P.PNil -> []
       P.PCons h t -> "::" : concatMap ctors [h,t]
-      P.PTuple es -> "_Tuple" ++ (show . length $ es ) : concatMap ctors es
+      P.PTuple es -> ("_Tuple" ++ (show . length $ es )) : concatMap ctors es
       P.PAlias _ p -> ctors p
       P.PData ctor ps -> (unCap ctor) : concatMap ctors ps
       P.PRecord _ -> []
@@ -109,7 +109,7 @@ reorder (L s expr) =
              -- remove let-bound variables from the context
              forM_ defs $ \(Definition lhs _ _) -> do
                 bound (boundVarsLHS lhs)
-                mapM free (ctors pattern)
+                mapM free (ctorsLHS lhs)
 
              let L _ let' = foldr (\ds bod -> L s (Let ds bod)) body' defss
 
@@ -146,8 +146,8 @@ buildDefDict defs =
     addKey = zipWith (\n (pdef,deps) -> (pdef,n,deps)) [0..]
 
     variableToKey :: (Def, Int, [String]) -> [(String, Int)]
-    variableToKey (Definition pattern _ _, key, _) =
-        [ (var, key) | var <- Set.toList (P.boundVars pattern) ]
+    variableToKey (Definition lhs _ _, key, _) =
+        [ (var, key) | var <- Set.toList (boundVarsLHS lhs) ]
 
     variableToKeyMap :: [(Def, Int, [String])] -> Map.Map String Int
     variableToKeyMap pdefsDeps =

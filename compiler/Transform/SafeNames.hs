@@ -32,6 +32,13 @@ pattern pat =
       PRecord fs    -> PRecord (map (lowmap var) fs)
       PAlias x p    -> PAlias (lowmap var x) (pattern p)
 
+leftHandSide :: LHS -> LHS
+leftHandSide lhs = 
+  case lhs of
+    Val pat -> Val $ pattern pat
+    Fun fname -> Fun (lowmap var fname)
+    Op _ -> lhs
+
 expression :: LExpr -> LExpr
 expression (L loc expr) =
     let f = expression in
@@ -58,8 +65,8 @@ expression (L loc expr) =
       PortOut name st signal -> PortOut name st (f signal)
 
 definition :: Def -> Def
-definition (Definition p e t) =
-    Definition (pattern p) (expression e) t
+definition (Definition lhs e t) =
+    Definition (leftHandSide lhs) (expression e) t
 
 metadataModule :: MetadataModule -> MetadataModule
 metadataModule modul =

@@ -8,7 +8,6 @@ import qualified Data.Set as Set
 
 import qualified SourceSyntax.Expression as E
 import qualified SourceSyntax.Declaration as D
-import qualified SourceSyntax.Pattern as Pattern
 import qualified SourceSyntax.Type as T
 import qualified Transform.Expression as Expr
 
@@ -51,7 +50,7 @@ duplicates decls =
               D.Out name expr _ -> (name, [expr])
               D.In name _ -> (name, [])
 
-    getNames = Set.toList . Pattern.boundVarsLHS
+    getNames = Set.toList . E.boundVarsLHS
 
     exprDups :: E.LExpr -> Either String E.LExpr
     exprDups expr = Expr.crawlLet defsDups expr

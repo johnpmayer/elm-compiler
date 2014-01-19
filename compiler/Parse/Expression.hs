@@ -196,25 +196,24 @@ expr = addLocation (choice [ ifExpr, letExpr, caseExpr ])
     <|> binaryExpr 
     <?> "an expression"
 
-defStart :: IParser [Pattern]
+defStart :: IParser (LHS, [Pattern])
 defStart =
-    choice [ do p1 <- try Pattern.term
-                infics p1 <|> func p1
-           , func =<< (PVar . LowIdent<$> parens symOp)
-           , (:[]) <$> Pattern.expr
-           ] <?> "the definition of a variable (x = ...)"
+    do
+      choice [ valDef, funDef, opDef ] 
+        <?> "the definition of a variable (x = ...)"
     where
-      func pattern =
-          case pattern of
-            PVar _ -> (pattern:) <$> spacePrefix Pattern.term
-            _ -> do try (lookAhead (whitespace >> string "="))
-                    return [pattern]
-
-      infics p1 = do
-        o:p <- try (whitespace >> anyOp)
-        p2  <- (whitespace >> Pattern.term)
-        return $ if o == '`' then [ PVar . LowIdent $ takeWhile (/='`') p, p1, p2 ]
-                             else [ PVar . LowIdent $ (o:p), p1, p2 ]
+      valDef= (\p -> (Val p, [])) <$> try Pattern.term
+      funDef = 
+        do
+          fname <- var
+          ps <- spacePrefix Pattern.term 
+          return (Fun (LowIdent fname), ps)
+      opDef = 
+        do
+          p1 <- Pattern.term
+          sym <- symOp
+          p2 <- Pattern.term
+          return (Op (Operator sym), [p1,p2])
 
 makeFunction :: [Pattern] -> LParseExpr -> LParseExpr
 makeFunction args body@(L s _) =
@@ -222,10 +221,10 @@ makeFunction args body@(L s _) =
 
 definition :: IParser ParseDef
 definition = withPos $ do
-  (name:args) <- defStart
+  (lhs,args) <- defStart
   padded equals
   body <- expr
-  return . Def name $ makeFunction args body
+  return . Def lhs $ makeFunction args body
 
 typeAnnotation :: IParser ParseDef
 typeAnnotation = TypeAnnotation <$> try start <*> Type.expr

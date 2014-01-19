@@ -2,9 +2,7 @@
 module Transform.Declaration where
 
 import Control.Applicative ((<$>))
-import qualified SourceSyntax.Pattern as P
 import SourceSyntax.Expression as E
-import SourceSyntax.Identifier
 import SourceSyntax.Declaration as D
 
 import qualified Transform.Expression as Expr
