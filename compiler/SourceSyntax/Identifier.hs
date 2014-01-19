@@ -18,6 +18,9 @@ newtype CapIdent = CapIdent { unCap :: String } deriving (Eq,Ord,Show)
 instance Pretty CapIdent where
   pretty (CapIdent s) = text s
 
+capmap :: (String -> String) -> CapIdent -> CapIdent
+capmap f (CapIdent s) = CapIdent $ f s
+
 newtype Operator = Operator { unOp :: String } deriving (Eq,Ord,Show)
 instance Pretty Operator where
   pretty (Operator s) = text s

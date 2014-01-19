@@ -2,7 +2,7 @@
 module Generate.JavaScript (generate) where
 
 import Control.Arrow (first,(***))
-import Control.Applicative ((<$>),(<*>))
+import Control.Applicative ((<$>),(<*>),pure)
 import Control.Monad.State
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -100,14 +100,14 @@ expression (L span expr) =
           do (args, body) <- foldM depattern ([], innerBody) (reverse patterns)
              body' <- expression body
              return $ case length args < 2 || length args > 9 of
-                        True  -> foldr (==>) body' (map (:[]) args)
-                        False -> ref ("F" ++ show (length args)) <| (args ==> body')
+                        True  -> foldr (==>) body' (map (pure . unLow ) args)
+                        False -> ref ("F" ++ show (length args)) <| (map unLow args ==> body')
           where
             depattern (args, body) pattern =
                 case pattern of
                   PVar x -> return (args ++ [x], body)
                   _ -> do arg <- Case.newVar
-                          return (args ++ [unLow arg], L s (Case (L s (Var arg)) [(pattern, body)]))
+                          return (args ++ [LowIdent arg], L s (Case (L s (Var arg)) [(pattern, body)]))
 
             (patterns, innerBody) = collect [p] e
 
@@ -185,49 +185,62 @@ expression (L span expr) =
                         [ string name, Port.outgoing tipe, value' ]
 
 definition :: Def -> State Int [Statement ()]
-definition (Definition pattern expr@(L span _) _) = do
+definition (Definition lhs expr@(L span _) _) = do
   expr' <- expression expr
   let assign x = varDecl x expr'
-  case pattern of
-    PVar x
-        | Help.isOp x ->
-            let op = LBracket () (ref "_op") (string x) in
-            return [ ExprStmt () $ AssignExpr () OpAssign op expr' ]
-        | otherwise ->
-            return [ VarDeclStmt () [ assign x ] ]
+  case lhs of
+    Val pattern -> 
+      case pattern of
+        PVar x -> 
+            return [ VarDeclStmt () [ assign . unLow $  x ] ]
+    
+        PRecord fields ->
+            let setField f = varDecl f (dotSep ["$",f]) in
+            return [ VarDeclStmt () (assign "$" : map (setField . unLow) fields) ]
+    
+        PTuple es -> 
+            return [ VarDeclStmt () (setup (zipWith decl (maybe [] id vars) [0..])) ]
+            where
+              vars = getVars es
+              getVars patterns =
+                  case patterns of
+                    PVar x : rest -> (:) <$> pure (unLow x) <*> getVars rest
+                    [] -> Just []
+                    _ -> Nothing
+              decl x n = varDecl x (dotSep ["$","_" ++ show n])
+              setup vars = assign "$" : vars
+        
+        PData name patterns | vars /= Nothing ->
+            return [ VarDeclStmt () (setup (zipWith decl (maybe [] id vars) [0..])) ]
+            where
+              vars = getVars patterns
+              getVars patterns = 
+                  case patterns of
+                    PVar x : rest -> (:) <$> pure (unLow x) <*> getVars rest
+                    [] -> Just []
+                    _ -> Nothing
+              decl x n = varDecl x (dotSep ["$","_" ++ show n])
+              setup vars = assign "$raw" : safeAssign : vars
+              safeAssign = varDecl "$" (CondExpr () if' (obj "$raw") exception)
+              if' = InfixExpr () OpStrictEq (obj "$raw.ctor") (string (unCap name))
+              exception = obj "_E.Case" `call` [ref "$moduleName", string (show span)]
+    
+        _ ->
+            do 
+              defs' <- concat <$> mapM toDef vars
+              return (VarDeclStmt () [assign "$"] : defs')
+            where
+              vars = Set.toList $ Pattern.boundVars pattern
+              mkVar = L span . Var
+              toDef y = let expr =  L span $ Case (mkVar "$") [(pattern, mkVar y)]
+                        in  definition $ Definition (Val (PVar (LowIdent y))) expr Nothing
+    Fun fname -> 
+        return [ VarDeclStmt () [ assign . unLow $ fname ] ]
 
-    PRecord fields ->
-        let setField f = varDecl f (dotSep ["$",f]) in
-        return [ VarDeclStmt () (assign "$" : map setField fields) ]
-
-    PData name patterns | vars /= Nothing ->
-        return [ VarDeclStmt () (setup (zipWith decl (maybe [] id vars) [0..])) ]
-        where
-          vars = getVars patterns
-          getVars patterns =
-              case patterns of
-                PVar x : rest -> (x:) `fmap` getVars rest
-                [] -> Just []
-                _ -> Nothing
-
-          decl x n = varDecl x (dotSep ["$","_" ++ show n])
-          setup vars
-              | Help.isTuple name = assign "$" : vars
-              | otherwise = assign "$raw" : safeAssign : vars
-
-          safeAssign = varDecl "$" (CondExpr () if' (obj "$raw") exception)
-          if' = InfixExpr () OpStrictEq (obj "$raw.ctor") (string (unCap name))
-          exception = obj "_E.Case" `call` [ref "$moduleName", string (show span)]
-
-    _ ->
-        do defs' <- concat <$> mapM toDef vars
-           return (VarDeclStmt () [assign "$"] : defs')
-        where
-          vars = Set.toList $ Pattern.boundVars pattern
-          mkVar = L span . Var
-          toDef y = let expr =  L span $ Case (mkVar "$") [(pattern, mkVar y)]
-                    in  definition $ Definition (PVar y) expr Nothing
-
+    Op symbol -> 
+        let op = LBracket () (ref "_op") (string . unOp $ symbol) in
+        return [ ExprStmt () $ AssignExpr () OpAssign op expr' ]
+    
 match :: SrcSpan -> Case.Match -> State Int [Statement ()]
 match span mtch =
   case mtch of

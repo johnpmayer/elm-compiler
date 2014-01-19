@@ -11,6 +11,7 @@ import qualified Data.List as List
 import qualified Data.Either as Either
 import SourceSyntax.Module
 import SourceSyntax.Expression
+import SourceSyntax.Identifier
 import SourceSyntax.Location as Loc
 import qualified SourceSyntax.Pattern as P
 import qualified SourceSyntax.Type as Type
@@ -95,6 +96,9 @@ extend :: Env -> P.Pattern -> Env
 extend env pattern = Map.union (Map.fromList (zip xs xs)) env
     where xs = Set.toList (P.boundVars pattern)
 
+extendLHS :: Env -> LHS -> Env
+extendLHS env lhs = Map.union (Map.fromList (zip xs xs)) env
+    where xs = Set.toList (boundVarsLHS lhs)
 
 replace :: String -> Env -> String -> Either String String
 replace variable env v =
@@ -146,9 +150,9 @@ rename env (L s expr) =
 
       Let defs e -> Let <$> mapM rename' defs <*> rename env' e
           where
-            env' = foldl extend env $ map (\(Definition p _ _) -> p) defs
-            rename' (Definition p body mtipe) =
-                Definition <$> format (renamePattern env' p)
+            env' = foldl extendLHS env $ map (\(Definition lhs _ _) -> lhs) defs
+            rename' (Definition lhs body mtipe) =
+                Definition <$> format (renameLHS env' lhs)
                            <*> rename env' body
                            <*> T.traverse (renameType' env') mtipe
 
@@ -169,6 +173,11 @@ rename env (L s expr) =
 
       PortOut name st signal -> PortOut name <$> renameType' env st <*> rnm signal
 
+renameLHS :: Env -> LHS -> Either String LHS
+renameLHS env lhs = 
+  case lhs of
+    Val pat -> Val <$> (renamePattern env pat)
+    _ -> return lhs
 
 renamePattern :: Env -> P.Pattern -> Either String P.Pattern
 renamePattern env pattern =
@@ -178,5 +187,6 @@ renamePattern env pattern =
       P.PRecord _ -> return pattern
       P.PAnything -> return pattern
       P.PAlias x p -> P.PAlias x <$> renamePattern env p
-      P.PData name ps -> P.PData <$> replace "pattern" env name
+      P.PData name ps -> P.PData <$> (CapIdent <$> replace "pattern" env (unCap name))
                                  <*> mapM (renamePattern env) ps
+
