@@ -30,14 +30,14 @@ source-repository head
   location: git://github.com/evancz/Elm.git
 
 Library
+  Hs-Source-Dirs:      compiler
   exposed-modules:     Elm.Internal.Dependencies,
                        Elm.Internal.Documentation,
                        Elm.Internal.Name,
                        Elm.Internal.Paths,
                        Elm.Internal.Utils,
                        Elm.Internal.Version
-  Hs-Source-Dirs:      compiler
-  other-modules:       SourceSyntax.Declaration,
+                       SourceSyntax.Declaration,
                        SourceSyntax.Expression,
                        SourceSyntax.Helpers,
                        SourceSyntax.Literal,
